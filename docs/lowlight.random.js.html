@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Random</title>
+
+    <link type="text/css" rel="stylesheet" href="css/atom-one-dark.css">
+    <link type="text/css" rel="stylesheet" href="css/styles.min.css">
+</head>
+
+<body>
+
+    <aside>
+        <header><h1>Random</h1></header><ul><li><a href="index.html">Home page</a></li></ul><ul><li class="category">Distribution laws</li><li id="menu-Beta"><a href="Beta.html">Beta</a></li><li id="menu-Gamma"><a href="Gamma.html">Gamma</a></li><li id="menu-Gauss"><a href="Gauss.html">Gauss</a></li><li id="menu-Lognormal"><a href="Lognormal.html">Lognormal</a></li><li id="menu-Exponential"><a href="Exponential.html">Exponential</a></li><li id="menu-VonMises"><a href="VonMises.html">VonMises</a></li><li id="menu-Random"><a href="Random.html">Random</a></li><li id="menu-Set"><a href="Set.html">Set</a></li><li id="menu-Triangular"><a href="Triangular.html">Triangular</a></li><li id="menu-Uniform"><a href="Uniform.html">Uniform</a></li><li id="menu-Normal"><a href="Normal.html">Normal</a></li><li id="menu-Weibull"><a href="Weibull.html">Weibull</a></li><li id="menu-Pareto"><a href="Pareto.html">Pareto</a></li><li class="category">Miscelleanous</li><li id="menu-Distribution"><a href="Distribution.html">Distribution</a></li><li id="menu-Utilities"><a href="Utilities.html">Utilities</a></li></ul>
+    </aside>
+
+    <main>
+        <header>
+            <h1>lowlight.random.js</h1>
+        </header>
+        <section>
+            
+
+
+
+
+
+<section class="source linenums">
+    <pre><code class="javascript">/**
+ * Copyright 2017, Lecoq Simon (lowlight.fr)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+(function (global) {
+    //Registering
+        if (typeof global.Lowlight === "undefined") { global.Lowlight = {} }
+        if ((typeof module === "object")&amp;&amp;(typeof module.exports === "object")) { module.exports = global.Lowlight }
+
+        
+//Includes
+    class Distribution {
+        /**
+         * Support class for probability distributions implementation.
+         * See [Probability Distribution]{@link https://en.wikipedia.org/wiki/Probability_distribution}.
+         * @category misc
+         * @abstract
+         */
+            constructor() {
+                /**
+                 * &lt;pre>
+                 * Internal random generator.
+                 * It will be initialized the first time &lt;span class="bold">Distribution.next&lt;/span> is called.
+                 * &lt;/pre>
+                 * @readonly
+                 * @private
+                 * @type {Generator}
+                 */
+                    this.generator = false
+
+                //Initialization
+                    this.seed(null)
+            }
+
+        /**
+         * Generate a new number.
+         * @return {Number} A generated number
+         */
+            next() {
+                return this.generator ? this.generator.next().value : (this.generator = this.constructor.generator.call(this), this.next())
+            }
+
+        /**
+         * &lt;pre>
+         * Seed generator.
+         * If value is &lt;span class="bold">null&lt;/span>, seed will be initialized with current timestamp.
+         * If value is a &lt;span class="bold">string&lt;/span>, it will be hashed into a number with [Distribution.seed]{@link Distribution#seed} method.
+         * &lt;/pre>
+         * &lt;div class="alert info">
+         * Note that once you call [Distribution.next]{@link Distribution#next} method, it isn't possible to change seed again unless you call [Distribution.reset]{@link Distribution#reset} method.
+         * &lt;/div>
+         * @example &lt;caption>Seed a generator&lt;/caption>
+         * // Seed a generator
+         * let generator = new Lowlight.Random.Distribution.Normal(0, 1).seed(0xCAFE)
+         * // You may seed again you generator while you haven't generated any number
+         * generator.seed("cafe")
+         *
+         * // Generate a new number
+         * generator.next() //Output -0.2679027397143018
+         *
+         * // You won't be able to change seed anymore
+         * generator.seed("tea")
+         * generator.seed() //Ouput 3045789 ("cafe"'s hashcode)
+         * @example &lt;caption>Force seed change&lt;/caption>
+         * //If you really need to change seed, you'll need to call &lt;span class="bold">Distribution.reset&lt;/span> method
+         * generator.reset().seed("tea")
+         * generator.seed() //Ouput 114704 ("tea"'s hashcode)
+         *
+         * //Which is actually equivalent to
+         * generator = new Lowlight.Random.Distribution.Normal(0, 1).seed("tea")
+         *
+         * //However, note that parameters (e.g. : mean, standard deviation, etc.) kept their values
+         * generator.mean() //Output 0
+         . generator.deviation() //Output 1
+         *
+         * @param {?(Number|String)} [seed] - Seed value
+         * @return {Distribution} Instance
+         */
+            seed(seed) {
+                if (arguments.length) {
+                    if (!this.generator) { this._seed = seed === null ? Date.now() : typeof seed === "number" ? seed : Distribution.hash((seed||"").toString()) }
+                    else { console.warn("Seed cannot be changed anymore after you called Distribution.next()") }
+                    return this
+                } else { return this._seed }
+            }
+
+        /**
+         * &lt;pre>
+         * Reset generator.
+         * This allows you to change &lt;span class="bold">seed&lt;/span> again, but it'll also reset generator's iterations counter as it will create a new one.
+         * &lt;/pre>
+         * @return {Distribution} Instance
+         */
+            reset() { return (this.generator = false, this) }
+
+        /**
+         * Hash a string into a number.
+         * @param {String} string - String to hash
+         * @return {Number} Hashed string
+         */
+            static hash(string) {
+                let hash = 0
+                for (let i = 0; i &lt; string.length; i++) { hash = ((hash &lt;&lt; 5) - hash) + string.charCodeAt(i), hash |= 0 }
+                return hash
+            }
+    }
+
+//Constants
+    Distribution.NV_MAGICCONST = 4*Math.exp(-0.5)/Math.sqrt(2)
+    Distribution.PI = Math.PI
+    Distribution.PI2 = Math.PI*2
+    Distribution.LOG4 = Math.log(4)
+    Distribution.SG_MAGICCONST = 1.0 + Math.log(4.5)
+    Distribution.E = Math.E
+
+
+        
+class Beta extends Distribution {
+    /**
+     * &lt;pre>
+     * Create a beta distribution random number generator.
+     * Conditions on the parameters are α > 0 and β > 0.
+     *
+     * This version due to Janne Sinkkonen, and matches all the std texts (e.g., Knuth Vol 2 Ed 3 pg 134 "the beta distribution").
+     *
+     * See [Beta Distribution]{@link https://en.wikipedia.org/wiki/Beta_distribution}.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Beta_distribution_pdf.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/1/11/Beta_distribution_cdf.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [alpha=2] - Shape parameter (α)
+     * @param {Number} [beta=2] - Shape parameter (β)
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(alpha = 0.5, beta = 0.5) {
+            super()
+            this.alpha(alpha).beta(beta)
+        }
+
+    /**
+     * Update shape paramater value.
+     * @param {Number} [mean] - Shape paramater (> 0)
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        alpha(alpha) { return arguments.length ? (this._alpha = alpha, this) : this._alpha }
+
+    /**
+    * &lt;pre>
+    * Update shape paramater value.
+    * &lt;/pre>
+    * @param {Number} [concentration] - Shape paramater (> 0)
+    * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        beta(beta) { return arguments.length ? (this._beta = beta, this) : this._beta }
+
+   /**
+    * Create a beta distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Beta distribution number generator
+    */
+       static *generator() {
+           let rand = new Distribution.Gamma(1, 1).seed(this.seed())
+           while (1) {
+               let y = rand.alpha(this.alpha()).next(), z = rand.alpha(this.beta()).next()
+               yield y / (y + z)
+           }
+       }
+}
+
+//Registering
+    Distribution.Beta = Beta
+
+        
+class Exponential extends Distribution {
+    /**
+     * &lt;pre>
+     * Create an exponential distribution random number generator.
+     * Returned values range from [0;+∞[ if λ is positive and [-∞;0[ if λ is negative,
+     * λ is 1/mean and shoul be non zero.
+     *
+     * See [Exponential Distribution]{@link https://en.wikipedia.org/wiki/Exponential_distribution}.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/e/ec/Exponential_pdf.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Exponential_cdf.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [rate=1] - Rate parameter (λ)
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(rate = 1) {
+            super()
+            this.rate(rate)
+        }
+
+    /**
+     * Update rate parameter value.
+     * @param {Number} [rate] - Rate parameter (λ)
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        rate(rate) { return arguments.length ? (this._rate = rate, this) : this._rate }
+
+   /**
+    * Create an exponential distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Exponential distribution number generator
+    */
+       static *generator() {
+           let rand = new Distribution.Random(this.seed())
+           while (1) { yield -Math.log(1 - rand.next())/this.rate() }
+       }
+}
+
+//Registering
+    Distribution.Exponential = Exponential
+
+        
+class Gamma extends Distribution {
+    /**
+     * &lt;pre>
+     * Create a gamma distribution random number generator.
+     * Conditions on the parameters are α > 0 and β > 0.
+     * The probability distribution function is: pdf(x) = (x&lt;sup>α- 1&lt;/sup> * e&lt;sup>-x/β&lt;/sup>)/(gamma(α) * β&lt;sup>α&lt;/sup>)
+     * Mean is α*beta, variance is α*β**2.
+     *
+     * Uses R.C.H. Cheng, "The generation of Gamma variables with non-integral shape parameters", Applied Statistics, (1977), 26, No. 1, p71-74.
+     * Uses ALGORITHM GS of Statistical Computing - Kennedy &amp; Gentle.
+     *
+     * See [Gamma Distribution]{@link https://en.wikipedia.org/wiki/Gamma_distribution}.
+     * &lt;/pre>
+     * &lt;div class="alert warning">
+     * A few older sources define the gamma distribution in terms of α > -1.
+     * &lt;/div>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/e/e6/Gamma_distribution_pdf.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/8/8d/Gamma_distribution_cdf.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [alpha=5] - Shape parameter
+     * @param {Number} [beta=1] - Rate parameter
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(alpha = 5, beta = 1) {
+            super()
+            this.alpha(alpha).beta(beta)
+        }
+
+    /**
+     * Update shape paramater value.
+     * @param {Number} [mean] - Shape paramater (> 0)
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        alpha(alpha) { return arguments.length ? (this._alpha = alpha, this) : this._alpha }
+
+    /**
+    * &lt;pre>
+    * Update rate paramater value.
+    * &lt;/pre>
+    * @param {Number} [concentration] - Rate paramater (> 0)
+    * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        beta(beta) { return arguments.length ? (this._beta = beta, this) : this._beta }
+
+   /**
+    * Create a gamma distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Gamma distribution number generator
+    */
+       static *generator() {
+           let rand =  new Distribution.Random(this.seed())
+           while (1) {
+               let alpha = this.alpha(), beta = this.beta()
+               if (alpha > 1) {
+                   let ainv = Math.sqrt(2 * alpha - 1), bbb = alpha - Distribution.LOG4, ccc = alpha + ainv
+                   while (1) {
+                       let v = rand.next(), w = 1 - rand.next()
+                       if (!((1e-7 &lt; v)&amp;&amp;(v &lt; .9999999))) { continue }
+                       let u = Math.log(v/(1-v))/ainv, x = alpha * Math.exp(u), z = v*v*w, r = bbb + ccc*u - x
+                       if ((r + Distribution.SG_MAGICCONST - 4.5*z >= 0)||(r >= Math.log(z))) { yield x * beta }
+                   }
+               } else if (alpha == 1) {
+                   let v = rand.next()
+                   while (v &lt;= 1e-7) { v = rand.next() }
+                   yield -Math.log(v) * beta
+               } else {
+                   let x
+                   while (1) {
+                       let v = rand.next(), w = rand.next()
+                       let b = (Distribution.E + alpha) / Distribution.E, p = b * v
+                       x = (p &lt;= 1) ? Math.pow(p, 1/alpha) : - Math.log((b-p)/alpha)
+                       if (p > 1) { if (w &lt;= Math.pow(x, alpha-1)) { break } } else if (w &lt;= Math.exp(-x)) { break }
+                   }
+                   yield x * beta
+               }
+           }
+       }
+}
+
+//Registering
+    Distribution.Gamma = Gamma
+
+        
+class Gauss extends Distribution {
+    /**
+     * &lt;pre>
+     * Create a Gauss distribution random number generator (should be faster than [Distribution.Normal]{@link Normal}).
+     *
+     * Uses Kinderman and Monahan method. Reference: Kinderman, A.J. and Monahan, J.F., "Computer generation of random variables using the ratio of uniform deviates", ACM Trans,
+     * Math Software, 3, (1977), pp257-260.
+     *
+     * See [Normal Distribution]{@link https://en.wikipedia.org/wiki/Normal_distribution}.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/7/74/Normal_Distribution_PDF.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/c/ca/Normal_Distribution_CDF.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [mean=0] - Mean
+     * @param {Number} [deviation=1] - Standard deviation
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(mean = 0, deviation = 1) {
+            super()
+            this.mean(mean).deviation(deviation)
+        }
+
+    /**
+     * Update mean value.
+     * @param {Number} [mean] - Mean
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        mean(mean) { return arguments.length ? (this._mean = mean, this) : this._mean }
+
+    /**
+    * Update standard deviation value.
+    * @param {Number} [deviation] - Standard deviation
+    * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        deviation(deviation) { return arguments.length ? (this._deviation = deviation, this) : this._deviation }
+
+   /**
+    * Create a Gauss distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Gauss distribution number generator
+    */
+       static *generator() {
+           let rand = new Distribution.Random(this.seed()), next = null
+           while (1) {
+               let z = next ; next = null
+               if (z === null) {
+                   let x = rand.next()*Distribution.PI2;
+                   let g = Math.sqrt(-2 * Math.log(1 - rand.next()))
+                   z = Math.cos(x) * g
+                   next = Math.sin(x) * g
+               }
+               yield this.mean() + z*this.deviation()
+           }
+       }
+}
+
+//Registering
+    Distribution.Gauss = Gauss
+
+        
+class Normal extends Distribution {
+    /**
+     * &lt;pre>
+     * Create a normal distribution random number generator.
+     *
+     * Uses Kinderman and Monahan method. Reference: Kinderman, A.J. and Monahan, J.F., "Computer generation of random variables using the ratio of uniform deviates", ACM Trans,
+     * Math Software, 3, (1977), pp257-260.
+     *
+     * See [Normal Distribution]{@link https://en.wikipedia.org/wiki/Normal_distribution}.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/7/74/Normal_Distribution_PDF.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/c/ca/Normal_Distribution_CDF.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [mean=0] - Mean
+     * @param {Number} [deviation=1] - Standard deviation
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(mean = 0, deviation = 1) {
+            super()
+            this.mean(mean).deviation(deviation)
+        }
+
+    /**
+     * Update mean value.
+     * @param {Number} [mean] - Mean
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        mean(mean) { return arguments.length ? (this._mean = mean, this) : this._mean }
+
+    /**
+    * Update standard deviation value.
+    * @param {Number} [deviation] - Standard deviation
+    * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        deviation(deviation) { return arguments.length ? (this._deviation = deviation, this) : this._deviation }
+
+   /**
+    * Create a normal distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Normal distribution number generator
+    */
+       static *generator() {
+           let rand = new Distribution.Random(this.seed()), a, b, z
+           while (1) {
+               while (1) {
+                   a = rand.next(), b = 1 - rand.next()
+                   z = Distribution.NV_MAGICCONST*(a-0.5)/b
+                   if ((z*z)/4 &lt;= - Math.log(b)) { break }
+               }
+               yield this.mean() + z*this.deviation()
+           }
+       }
+}
+
+//Registering
+    Distribution.Normal = Normal
+
+        
+class Lognormal extends Normal {
+    /**
+     * &lt;pre>
+     * Create a log-normal distribution random number generator.
+     * If you take the natural logarithm of this distribution, you'll get a normal distribution.
+     * &lt;span class="bold">mean&lt;/span> can have any value but &lt;span class="bold">deviation&lt;/span> must be greater than zero.
+     *
+     * See [Log-normal Distribution]{@link https://en.wikipedia.org/wiki/Log-normal_distribution}.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/a/ae/PDF-log_normal_distributions.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/4/42/CDF-log_normal_distributions.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [mean=0] - Mean
+     * @param {Number} [deviation=1] - Standard deviation (deviation > 0)
+     * @category distribution
+     * @extends Normal
+     */
+        constructor(mean = 0, deviation = 1) {
+            super(mean, deviation)
+        }
+
+   /**
+    * Create a log-normal distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Log-normal distribution number generator
+    */
+       static *generator() {
+           let rand = super.generator.call(this)
+           while (1) { yield Math.exp(rand.next().value) }
+       }
+}
+
+//Registering
+    Distribution.Lognormal = Lognormal
+
+        
+class Pareto extends Distribution {
+    /**
+     * &lt;pre>
+     * Create a Pareto distribution random number generator.
+     *
+     * Jain, pg. 495.
+     *
+     * See [Pareto Distribution]{@link https://en.wikipedia.org/wiki/Pareto_distribution}.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/1/11/Probability_density_function_of_Pareto_distribution.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Cumulative_distribution_function_of_Pareto_distribution.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [alpha=1] - Shape parameter
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(alpha = 1) {
+            super()
+            this.alpha(alpha)
+        }
+
+    /**
+     * Update shape paramater value.
+     * @param {Number} [mean] - Shape paramater (> 0)
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        alpha(alpha) { return arguments.length ? (this._alpha = alpha, this) : this._alpha }
+
+   /**
+    * Create a Pareto distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Pareto distribution number generator
+    */
+       static *generator() {
+           let rand = new Distribution.Random(this.seed())
+           while (1) { yield 1 / Math.pow(1 - rand.next(), 1/this.alpha()) }
+       }
+}
+
+//Registering
+    Distribution.Pareto = Pareto
+
+        
+class Random extends Distribution {
+    /**
+     * &lt;pre>
+     * Random number between [0;1[ generator.
+     *
+     * Wichman-Hill random number generator.
+     *
+     * See [Uniform Distribution]{@link https://en.wikipedia.org/wiki/Uniform_distribution_(continuous)}.
+     * &lt;/pre>
+     * &lt;div class="alert warning">
+     * This is the sole Distribution that can takes a &lt;span class="bold">seed&lt;/span> argument in its constructor.
+     * Other distributions need to be initialized with [Distribution.seed]{@link Distribution#seed} method.
+     * &lt;/div>
+     * @param {?(Number|String)} [seed] - Seed
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(seed) {
+            super()
+            this.seed(seed)
+        }
+
+   /**
+    * Create a uniform distribution random number between [0;1[ generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Uniform distribution number generator
+    */
+       static *generator() {
+           let a = 30269, b = 30307, c = 30323, seed = this.seed()
+           let x = seed%(a-1)+1, y = seed%(b-1)+1, z = seed%(c-1)+1
+           while (1) {
+               x = (x*171)%a, y = (y*172)%b, z = (z*170)%c
+               yield (x/a + y/b + z/c) % 1
+           }
+       }
+}
+
+//Registering
+    Distribution.Random = Random
+
+        
+class Set extends Distribution {
+    /**
+     * &lt;pre>
+     * Uniform distribution number generator on a restricted set of numbers.
+     * &lt;/pre>
+     * @example &lt;caption>Basic usage&lt;/caption>
+     * //Instantiate generator
+     * let generator = new Distribution.Set(["red", "orange", "yellow", "green", "blue", "indigo", "violet"]).seed(0)
+     *
+     * //Pick random elements
+     * generator.next() //Output "red"
+     * generator.next() //Output "violet"
+     * @example &lt;caption>Multiple occurences values&lt;/caption>
+     * //Update values
+     * //In the following example, 1/6 to have a 'critical hit' or 'missed' and 2/3 to have a 'regular hit'
+     * generator.values(["critical hit", "missed"].concat(Array(4).fill("hit")))
+     * generator.next() //Output "critical hit"
+     * generator.next() //Output "hit"
+     * @param {Array} [values=[0, 1]] - Values array
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(values = [0, 1]) {
+            super()
+            this.values(values)
+        }
+
+    /**
+     * Update set of values.
+     * @param {Array} [values] - Values array
+     * @return {Array|Distribution} Return instance in setter mode and value in getter mode
+     */
+        values(values) { return arguments.length ? (this._values = values, this) : this._values }
+
+   /**
+    * Create an uniform distribution random number generator on a restricted set of numbers.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Uniform distribution number generator
+    */
+       static *generator() {
+           let rand = new Distribution.Uniform().seed(this.seed())
+           while (1) { yield this.values()[Math.floor(rand.max(this.values().length).next())] }
+       }
+}
+
+//Registering
+    Distribution.Set = Set
+
+        
+    class Triangular extends Distribution {
+        /**
+         * &lt;pre>
+         * Triangular distribution umber generator.
+         * Continuous distribution bounded by given lower and upper limits, and having a given mode value in-between.
+         * See [Triangular distribution]{@link https://en.wikipedia.org/wiki/Triangular_distribution}.
+         * &lt;/pre>
+         * &lt;div style="text-align:center">
+         *      &lt;figure style="display:inline-block">
+         *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/4/45/Triangular_distribution_PMF.png">
+         *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+         *      &lt;/figure>
+         *      &lt;figure style="display:inline-block">
+         *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/e/e5/Triangular_distribution_CMF.png">
+         *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+         *      &lt;/figure>
+         * &lt;/div>
+         * @param {Number} [min=0] - Lower bound
+         * @param {Number} [max=1] - Upper bound
+         * @param {?Number} [mode=null] - Mode (default to midpoint between bounds, ie. symetric distribution)
+         * @category distribution
+         * @extends Distribution
+         */
+            constructor(min = 0, max = 1, mode = null) {
+                super()
+                this.min(min).max(max).mode(mode)
+            }
+
+        /**
+         * Update lower bound value.
+         * @param {Number} [min] - Lower bound
+         * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+         */
+            min(min) { return arguments.length ? (this._min = min, this) : this._min }
+
+        /**
+        * Update upper bound value.
+        * @param {Number} [max] - Upper bound
+        * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+         */
+            max(max) { return arguments.length ? (this._max = max, this) : this._max }
+
+        /**
+        * Update mode value.
+        * Must be between lower and upper bounds.
+        * @param {Number} [mode] - Mode value
+        * @return {?(Number|Distribution)} Return instance in setter mode and value in getter mode
+         */
+            mode(mode) { return arguments.length ? (this._mode = mode, this) : this._mode }
+
+       /**
+        * Create a uniform distribution random number generator.
+        * &lt;div class="alert warning">
+        * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+        * &lt;/div>
+        * @private
+        * @return {Generator} Uniform distribution number generator
+        */
+           static *generator() {
+               let rand = new Distribution.Random(this.seed()), c, v, swap = false
+               while (1) {
+                   let min = swap ? this.max() : this.min() , max = swap ? this.min() : this.max()
+                   let c = (this.mode() === null) ? 0.5 : (this.mode() - min)/(max - min)
+                   if (!Number.isFinite(c)) { yield min } else {
+                       let v = rand.next()
+                       if (v > c) {
+                           v = 1 - v ; c = 1 - c ; swap = !swap
+                           yield min + (max - min) * Math.sqrt(v * c)
+                       }
+                   }
+               }
+           }
+    }
+
+    //Registering
+        Distribution.Triangular = Triangular
+
+        
+class Uniform extends Distribution {
+    /**
+     * &lt;pre>
+     * Uniform distribution number generator.
+     *
+     * See [Uniform Distribution]{@link https://en.wikipedia.org/wiki/Uniform_distribution_(continuous)}.
+     * Upper bound may or not be included depending on rounding.
+     * If &lt;span class="bold">min&lt;/span> is greater than &lt;span class="bold">max&lt;/span>, min will always be returned.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/9/96/Uniform_Distribution_PDF_SVG.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/6/63/Uniform_cdf.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [min=0] - Lower bound (or Upper bound if only one argument is given)
+     * @param {Number} [max=1] - Upper bound
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(min = 0, max = 1) {
+            super()
+            if (arguments.length === 1) { this.min(0).max(arguments[0]) } else { this.min(min).max(max) }
+        }
+
+    /**
+     * Update lower bound value.
+     * @param {Number} [min] - Lower bound
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        min(min) { return arguments.length ? (this._min = min, this) : this._min }
+
+    /**
+    * Update upper bound value.
+    * @param {Number} [max] - Upper bound
+    * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        max(max) { return arguments.length ? (this._max = max, this) : this._max }
+
+   /**
+    * Create an uniform distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Uniform distribution number generator
+    */
+       static *generator() {
+           let rand = new Distribution.Random(this.seed())
+           while (1) { yield this.min() + (this.min() &lt; this.max() ? rand.next() * (this.max()-this.min()) : 0) }
+       }
+}
+
+//Registering
+    Distribution.Uniform = Uniform
+
+        
+class VonMises extends Distribution {
+    /**
+     * &lt;pre>
+     * Create a Von Mises distribution random number generator (circular data distribution).
+     *
+     * Based upon an algorithm published in: Fisher, N.I., "Statistical Analysis of Circular Data", Cambridge, University Press, 1993.
+     * Thanks to Magnus Kessler for a correction to the implementation of step 4.
+     *
+     * See [Von Mises Distribution]{@link https://en.wikipedia.org/wiki/Von_Mises_distribution}.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/b/b6/VonMises_distribution_PDF.png">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/2/29/VonMises_distribution_CDF.png">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [mean=0] - Mean angle
+     * @param {Number} [concentration=1] - Concentration parameter
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(mean = 0, concentration = 1) {
+            super()
+            this.mean(mean).concentration(concentration)
+        }
+
+    /**
+     * Update mean angle value.
+     * @param {Number} [mean] - Mean angle (0 ≤ mean angle ≤ 2ℼ)
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        mean(mean) { return arguments.length ? (this._mean = ((mean%Distribution.PI2)+Distribution.PI2)%Distribution.PI2, this) : this._mean }
+
+    /**
+    * &lt;pre>
+    * Update concentration paramater value.
+    * If zero, this distribution reduces to an uniform random angle over the range 0 to 2ℼ.
+    * &lt;/pre>
+    * @param {Number} [concentration] - Concentration paramater (≥ 0)
+    * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        concentration(concentration) { return arguments.length ? (this._concentration = concentration, this) : this._concentration }
+
+   /**
+    * Create a Von Mises distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Von Mises distribution number generator
+    */
+       static *generator() {
+           let rand = new Distribution.Random(this.seed()), z
+           while (1) {
+               let k = this.concentration(), m = this.mean()
+               if (k &lt; 1.e-6) { yield Distribution.PI2 * rand.next() } else {
+                   let s = 0.5/k, r = s + Math.sqrt(1 + s*s)
+                   while (1) {
+                       let v = rand.next(), w = rand.next()
+                       z = Math.cos(Distribution.PI * v)
+                       let d = z / (r + z)
+                       if ((w &lt; 1 - d*d)||(w &lt;= (1 - d) * Math.exp(d))) { break }
+                   }
+                   let q = 1/r, f = (q + z)/(1 + q * z)
+                   yield rand.next() > 0.5 ? (m + Math.acos(f) % Distribution.PI2) : (m - Math.acos(f) % Distribution.PI2)
+               }
+           }
+       }
+}
+
+//Registering
+    Distribution.VonMises = VonMises
+
+        
+class Weibull extends Distribution {
+    /**
+     * &lt;pre>
+     * Create a Weibull distribution random number generator.
+     *
+     * Jain, pg. 499; bug fix courtesy Bill Arms
+     *
+     * See [Weibull Distribution]{@link https://en.wikipedia.org/wiki/Weibull_distribution}.
+     * &lt;/pre>
+     * &lt;div style="text-align:center">
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/5/58/Weibull_PDF.svg">
+     *      &lt;figcaption style="text-align:center">Probability density function&lt;/figcaption>
+     *      &lt;/figure>
+     *      &lt;figure style="display:inline-block">
+     *      &lt;img style="max-height:400px; max-width:400px" src="https://upload.wikimedia.org/wikipedia/commons/7/7e/Weibull_CDF.svg">
+     *      &lt;figcaption style="text-align:center">Cumulative distribution function&lt;/figcaption>
+     *      &lt;/figure>
+     * &lt;/div>
+     * @param {Number} [scale=1] - Scale parameter
+     * @param {Number} [shape=1] - Shape parameter
+     * @category distribution
+     * @extends Distribution
+     */
+        constructor(scale = 1, shape = 1) {
+            super()
+            this.scale(scale).shape(shape)
+        }
+
+    /**
+     * Update scale paramater value.
+     * @param {Number} [mean] - Scale paramater (> 0)
+     * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        scale(scale) { return arguments.length ? (this._scale = scale, this) : this._scale }
+
+    /**
+    * &lt;pre>
+    * Update shape paramater value.
+    * &lt;/pre>
+    * @param {Number} [concentration] - Shape paramater (> 0)
+    * @return {Number|Distribution} Return instance in setter mode and value in getter mode
+     */
+        shape(shape) { return arguments.length ? (this._shape = shape, this) : this._shape }
+
+    /**
+    * Create a Weibull distribution random number generator.
+    * &lt;div class="alert warning">
+    * This method requires &lt;span class="bold">this&lt;/span> context to be a {@link Distribution} instance, and this cannot be called directly.
+    * &lt;/div>
+    * @private
+    * @return {Generator} Weibull distribution number generator
+    */
+       static *generator() {
+           let rand =  new Distribution.Random(this.seed())
+           while (1) { yield this.scale() * Math.pow(-Math.log(1 - rand.next()), 1/this.shape()) }
+       }
+}
+
+//Registering
+    Distribution.Weibull = Weibull
+
+
+        
+class Utilities {
+    /**
+     * Set of utilitary functions.
+     * @category misc
+     */
+        constructor() {}
+
+    /**
+     * Initialize generators.
+     * @param {?(Number|String)} [seed=null] - Seed
+     * @ignore
+     */
+        static init(seed = null) {
+            Utilities.shuffle.generator = new Distribution.Uniform(seed)
+            Utilities.sample.generator = new Distribution.Uniform(seed)
+            Utilities.choice.generator = new Distribution.Uniform(seed)
+        }
+
+    /**
+     * &lt;pre>
+     * Shuffle an array.
+     * &lt;span class="bold">array&lt;/span> will always be shuffled the same way for a particular &lt;span class="bold">seed&lt;/span>.
+     * &lt;/pre>
+     * &lt;div class="alert info">
+     * This method does not modify original array.
+     * &lt;/div>
+     * @param {Array|String} array - Array to shuffle
+     * @param {?(Number|String|false)} [seed=false] - Seed (set to &lt;span class="bold">false&lt;/span> to reuse previous seeded generator)
+     * @return {Array|String} Shuffled array
+     */
+        static shuffle(array, seed = false) {
+            let rand = (seed === false) ? Utilities.shuffle.generator : Utilities.shuffle.generator.reset().seed(seed)
+            let copy = Array.isArray(array) ? array.slice() : array.toString().split("")
+            for (let i = copy.length-1; 0 &lt;= i; i--) {
+                let j = Math.floor(rand.max(i).next()), t = copy[i]
+                copy[i] = copy[j] ; copy[j] = t
+            }
+            return Array.isArray(array) ? copy : copy.join("")
+        }
+
+    /**
+     * &lt;pre>
+     * Return a sample from an array. Original array isn't modified.
+     * Sampled array will always be the same for a particular &lt;span class="bold">seed&lt;/span>.
+     * &lt;/pre>
+     * @param {Array|String} array - Array to sample
+     * @param {Number} [length=array.length] - Sampled array length (if &lt;span class="bold">replace&lt;/span> is &lt;span class="bold">false&lt;/span>, sampled arrays will never be larger than original array length)
+     * @param {Boolean} [replace=false] - If true, drawn values will be replaced in pool
+     * @param {?(Number|String|false)} [seed=false] - Seed (set to &lt;span class="bold">false&lt;/span> to reuse previous seeded generator)
+     * @return {Array} Sampled array
+     */
+        static sample(array, length, replace = false, seed = false) {
+            length = (typeof length === "number") ? replace ? length : Math.min(array.length, length) : array.length
+            let rand = (seed === false) ? Utilities.sample.generator : Utilities.sample.generator.reset().seed(seed)
+            let copy = Array.isArray(array) ? array.slice() : array.toString().split(""), sampled = []
+            for (let i = 0; i &lt; length; i++) {
+                let j = Math.floor(rand.max(copy.length).next())
+                if (!replace) { sampled.push(copy.splice(j, 1)[0]) } else { sampled.push(copy[j]) }
+            }
+            return sampled
+        }
+
+    /**
+     * &lt;pre>
+     * Return a random element from an array.
+     * Chosen element will always be the same for a particular &lt;span class="bold">seed&lt;/span>.
+     * &lt;/pre>
+     * @param {Array|String} array - Array to sample
+     * @param {?(Number|String|false)} [seed=false] - Seed (set to &lt;span class="bold">false&lt;/span> to reuse previous seeded generator)
+     * @return {Array} Chosen element
+     */
+        static choice(array, seed = false) {
+            let rand = ((seed === false) ? Utilities.choice.generator : Utilities.choice.generator.reset().seed(seed)).max(array.length)
+            return array[Math.floor(rand.next())]
+        }
+}
+Utilities.init()
+
+
+        global.Lowlight.Random = {Distribution, Utilities}
+
+})(typeof window !== "undefined" ? window : this)
+</code></pre>
+</section>
+ 
+
+        </section>
+        <footer>
+            Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Fri Jul 07 2017 21:39:47 GMT+0200 (Paris, Madrid (heure d’été))
+            <br />
+            Embellished by <a href="https://github.com/lowlighter/jsdoc-spotlight">Spotlight</a> theme
+        </footer>
+    </main>
+
+    <script src="js/jquery-3.1.1.min.js"></script>
+    <script src="js/scripts.min.js"></script>
+    <script src="js/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</body>
+</html>

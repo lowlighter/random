@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <link rel="stylesheet" href="./css/style.css">
+        <link type="text/css" rel="stylesheet" href="css/atom-one-dark.css">
+    </head>
+    <body>
+        <header>
+            <h1>Random</h1>
+            <div><a href="https://github.com/lowlighter/random">GitHub</a></div>
+            <div><a href="https://lowlighter.github.io/random/docs/">Documentation</a></div>
+            <div><a href="https://lowlight.fr">Lowlight.fr</a></div>
+        </header>
+        <div class="container">
+            <div class="description">
+                <p>
+                    This is a live demo from this <a href="https://github.com/lowlighter/random">library</a>.<br>
+                    You can change interract with drop-down menus and buttons to change application's behaviour.<br>
+                    Demo code will be updated accordingly.<br>
+                </p>
+                <p>
+                    Unlike <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random">Math.random</a>, this library allows user
+                    to choose himself a <span class="bold">seed</span> (both number and hashed strings), in addition to proposing differents probability distributions (you may check <a href="https://lowlighter.github.io/random/docs/">Documentation</a>
+                    to get a complete list of availables distributions).
+                </p>
+                <p style="color:orange">
+                    Note : Generating a large number at once may slow down the page.
+                </p>
+            </div>
+            <div class="app card">
+                <h3>Live demo</h3>
+                <div class="wrapper">
+                    <div class="pixi-view"></div>
+                    <div>
+                        <table>
+                            <tr class="all">
+                                <td>Seed</td>
+                                <td><input type="number" name="seed"></td>
+                            </tr>
+                            <tr class="all">
+                                <td>Number of rolls</td>
+                                <td><input type="number" name="rolls" min="0" value="10000" step="1000"></td>
+                            </tr>
+                            <tr class="all">
+                                <td>Distribution law</td>
+                                <td>
+                                    <select name="distribution">
+                                        <option value="beta">Beta</option>
+                                        <option value="exponential">Exponential</option>
+                                        <option value="gamma">Gamma</option>
+                                        <option value="gauss">Gauss</option>
+                                        <option value="lognormal">Log-normal</option>
+                                        <option value="normal">Normal</option>
+                                        <option value="pareto">Pareto</option>
+                                        <option value="triangular">Triangular</option>
+                                        <option value="uniform">Uniform</option>
+                                        <option value="vonMises">Von Mises</option>
+                                        <option value="weibull">Weibull</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr class="beta gamma pareto" style="display:none">
+                                <td>Alpha (&alpha;)</td>
+                                <td><input type="number" name="alpha" min="0" max="10"></td>
+                            </tr>
+                            <tr class="beta gamma" style="display:none">
+                                <td>Beta (&beta;)</td>
+                                <td><input type="number" name="beta" min="0" max="10"></td>
+                            </tr>
+
+                            <tr class="gauss normal lognormal vonMises" style="display:none">
+                                <td>Mean (&mu;)</td>
+                                <td><input type="number" name="mean" value="0"></td>
+                            </tr>
+                            <tr class="gauss normal lognormal" style="display:none">
+                                <td>Standard deviation (&sigma;)</td>
+                                <td><input type="number" name="deviation" value="1"></td>
+                            </tr>
+                            <tr class="triangular uniform" style="display:none">
+                                <td>Lower bound (min)</td>
+                                <td><input type="number" name="min"></td>
+                            </tr>
+                            <tr class="triangular uniform" style="display:none">
+                                <td>Upper bound (max)</td>
+                                <td><input type="number" name="max"></td>
+                            </tr>
+                            <tr class="vonMises" style="display:none">
+                                <td>concentration</td>
+                                <td><input type="number" name="concentration" min="0"></td>
+                            </tr>
+                            <tr class="weibull" style="display:none">
+                                <td>Scale</td>
+                                <td><input type="number" name="scale" min="0"></td>
+                            </tr>
+                            <tr class="weibull" style="display:none">
+                                <td>Shape</td>
+                                <td><input type="number" name="shape" min="0"></td>
+                            </tr>
+                            <tr class="exponential" style="display:none">
+                                <td>Rate</td>
+                                <td><input type="number" name="rate" min="1"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="code card">
+                <h3>Code sample</h3>
+                <pre>
+                    <code>
+    //Instantiate and seed generator
+        let Distribution = Lowlight.Random.Distribution
+        let generator = new Distribution.<span class="code-distribution">Normal</span>().seed(<span class="code-seed">0</span>)
+
+    //Configure generator
+        generator<!--
+        --><span class="sample beta gamma pareto ">.alpha(<span class="code-alpha">0</span>)</span><!--
+        --><span class="sample beta gamma">.beta(<span class="code-beta">0</span>)</span><!--
+        --><span class="sample gauss normal lognormal vonMises">.mean(<span class="code-mean">0</span>)</span><!--
+        --><span class="sample gauss normal lognormal">.deviation(<span class="code-deviation">0</span>)</span><!--
+        --><span class="sample triangular uniform">.min(<span class="code-min">0</span>).max(<span class="code-max">0</span>).mode(null)</span><!--
+        --><span class="sample vonMises">.concentration(<span class="code-concentration">0</span>)</span><!--
+        --><span class="sample weibull">.scale(<span class="code-scale">0</span>).shape(<span class="code-shape">0</span>)</span><!--
+        --><span class="sample exponential">.rate(<span class="code-rate">0</span>)</span>
+
+    //Generate pseudo-random numbers
+    //Output <span class="code-next">random number</span>
+        setInterval(function () { console.log(generator.next()) }, 500)
+                    </code>
+                </pre>
+        </div>
+        <script type="text/javascript" src="./js/jquery.js"></script>
+        <script type="text/javascript" src="./js/chart.min.js"></script>
+        <script type="text/javascript" src="./../bin/lowlight.random.js"></script>
+        <script type="text/javascript" src="./js/demo.js"></script>
+        <script src="js/highlight.pack.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script>
+    </body>
+</html>
