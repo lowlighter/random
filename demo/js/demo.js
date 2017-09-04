@@ -1,9 +1,6 @@
 $(function () {
-    //Seed and init
-        $("input[name='seed']").val(Date.now())
+    //Init and params
         let rand = {}, r = null, interval = null
-
-    //Params
         let param = {
             uniform:{min:0, max:3, step:0.03},
             normal:{center:true},
@@ -20,11 +17,11 @@ $(function () {
         }
 
     //Chart creation
-        $(`<div class="chart-wrapper" style="width:600px;margin:0;"><canvas class="chart"></canvas></div>`).appendTo(".pixi-view")
+        $(`<div class="chart-wrapper" style="width:600px;margin:0;"><canvas class="chart"></canvas></div>`).appendTo(".app-view")
         let chart = new Chart($(`.chart`).get(0).getContext("2d"), {
             type:"bar", data:{labels:[], datasets:[{data:[]}]},
             options:{ animateScale:true, animationEasing:"linear", legend:{display:false},
-                title:{ display: true, text:""},
+                title:{ display: false, text:""},
                 scales:{
                     xAxes:[{gridLines:{display:false}, categoryPercentage:1, barPercentage:1.0}],
                     yAxes:[{ticks:{beginAtZero:true}, gridLines:{display:false}}]
@@ -35,7 +32,7 @@ $(function () {
         function demo(distribution) {
             //Name update
                 let name = distribution.charAt(0).toLocaleUpperCase()+distribution.substr(1)
-                chart.options.title.text = `${name} distribution`
+                chart.options.title.text = `Distribution : ${name}`
                 $(".code-distribution").text(name)
 
             //Parameters displayed updated
@@ -55,7 +52,7 @@ $(function () {
             //Labels update
                 chart.data.labels = (new Array(sample)).fill(0).map((v, i) => (i == 0)||((i*step)%label == 0)||(i == sample-1) ? (min + i*step).toFixed(-Math.log10(step)) : "")
                 chart.data.datasets[0].data = (new Array(sample)).fill(0)
-                chart.data.datasets[0].backgroundColor = (new Array(sample)).fill("rgba(30,144,255,0.3)")
+                chart.data.datasets[0].backgroundColor = (new Array(sample)).fill("rgba(0,0,0,1)")
                 chart.update()
 
             //Rolls
@@ -72,29 +69,37 @@ $(function () {
                 interval = setInterval(function () { $(".code-next *").text(r.next()) }, 500)
         }
 
-    //Parameter change
-        $("input[type=number]").on("input", function () {
-            let name = $(this).attr("name"), val = parseInt($(this).val())
-            if (name === "seed") {
-                $(`.code-seed *`).text(val)
-                if (r.seed() !== val) { r.reset().seed(val) }
-            } else if (name === "rolls") {
-                demo($('[name="distribution"]').val())
-            } else if (Number.isFinite(val)) {
-                r[name](val)
-                $(`.code-${name} *`).text(val)
-                demo($('[name="distribution"]').val())
-            }
-        })
+    //Controls
+        function controller() {
+            //Seed
+                $("input[name='seed']").val(Date.now())
+            //Parameter change
+                $("input[type=number]").on("input", function () {
+                    let name = $(this).attr("name"), val = parseInt($(this).val())
+                    if (name === "seed") {
+                        $(`.code-seed *`).text(val)
+                        if ((r.seed() !== val)&&(Number.isFinite(val))) { r.reset().seed(val) }
+                    } else if (name === "rolls") {
+                        demo($('[name="distribution"]').val())
+                    } else if (Number.isFinite(val)) {
+                        r[name](val)
+                        $(`.code-${name} *`).text(val)
+                        demo($('[name="distribution"]').val())
+                    }
+                })
 
-    //Distribution change
-        $('[name="distribution"]').on("change", function () {
-            let distribution = $(this).val()
-            demo(distribution)
-            $(`.app table tr.${distribution} input[type=number]`).each(function () { $(this).val(r[$(this).attr("name")]()) })
-            $(`.code .${distribution} [class^=code]`).each(function () { $(this).find("*").text(r[$(this).attr("class").match(/-(.*)/)[1]]()) })
-        }).val("normal")
-        
+            //Distribution change
+                $('[name="distribution"]').on("change", function () {
+                    let distribution = $(this).val()
+                    demo(distribution)
+                    $(`.app table tr.${distribution} input[type=number]`).each(function () { $(this).val(r[$(this).attr("name")]()) })
+                    $(`.code .${distribution} [class^=code]`).each(function () { $(this).find("*").text(r[$(this).attr("class").match(/-(.*)/)[1]]()) })
+                }).val("normal")
+        }
+
+
+
     //Demo
         demo("normal")
+        controller()
 })
