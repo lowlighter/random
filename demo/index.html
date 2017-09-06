@@ -46,22 +46,22 @@
                             <td><input type="number" name="seed"></td>
                         </tr>
                         <tr class="all">
-                            <td>Nombre de tirages</td>
+                            <td>Number of draws</td>
                             <td><input type="number" name="rolls" min="0" value="10000" step="1000"></td>
                         </tr>
                         <tr class="all">
-                            <td>Loi de probabilité</td>
+                            <td>Distribution law</td>
                             <td>
                                 <select name="distribution">
                                     <option value="beta">Beta</option>
-                                    <option value="exponential">Exponentielle</option>
+                                    <option value="exponential">Exponential</option>
                                     <option value="gamma">Gamma</option>
-                                    <option value="gauss">Gaussienne</option>
-                                    <option value="lognormal">Log-normale</option>
-                                    <option value="normal">Normale</option>
+                                    <option value="gauss">Gauss</option>
+                                    <option value="lognormal">Lognormal</option>
+                                    <option value="normal">Normal</option>
                                     <option value="pareto">Pareto</option>
-                                    <option value="triangular">Triangulaire</option>
-                                    <option value="uniform">Uniforme</option>
+                                    <option value="triangular">Triangular</option>
+                                    <option value="uniform">Uniform</option>
                                     <option value="vonMises">Von Mises</option>
                                     <option value="weibull">Weibull</option>
                                 </select>
@@ -77,19 +77,19 @@
                         </tr>
 
                         <tr class="gauss normal lognormal vonMises" style="display:none">
-                            <td>Espérance (&mu;)</td>
+                            <td>Mean (&mu;)</td>
                             <td><input type="number" name="mean" value="0"></td>
                         </tr>
                         <tr class="gauss normal lognormal" style="display:none">
-                            <td>Ecart-type (&sigma;)</td>
+                            <td>Deviation (&sigma;)</td>
                             <td><input type="number" name="deviation" value="1"></td>
                         </tr>
                         <tr class="triangular uniform" style="display:none">
-                            <td>Borne inférieure (min)</td>
+                            <td>Lower bound (min)</td>
                             <td><input type="number" name="min"></td>
                         </tr>
                         <tr class="triangular uniform" style="display:none">
-                            <td>Borne supérieure (max)</td>
+                            <td>Upper bound (max)</td>
                             <td><input type="number" name="max"></td>
                         </tr>
                         <tr class="vonMises" style="display:none">
@@ -97,15 +97,15 @@
                             <td><input type="number" name="concentration" min="0"></td>
                         </tr>
                         <tr class="weibull" style="display:none">
-                            <td>Echelle</td>
+                            <td>Scale</td>
                             <td><input type="number" name="scale" min="0"></td>
                         </tr>
                         <tr class="weibull" style="display:none">
-                            <td>Forme</td>
+                            <td>Shape</td>
                             <td><input type="number" name="shape" min="0"></td>
                         </tr>
                         <tr class="exponential" style="display:none">
-                            <td>Intensité</td>
+                            <td>Rate</td>
                             <td><input type="number" name="rate" min="1"></td>
                         </tr>
                     </table>
@@ -115,7 +115,7 @@
         <div class="container-full">
             <pre>
                 <code class="code">
-        //Instanciation
+        //Initialization
             let Distribution = Lowlight.Random.Distribution
             let generator = new Distribution.<span class="code-distribution">Normal</span>().seed(<span class="code-seed">0</span>)
 
@@ -130,8 +130,8 @@
             --><span class="sample weibull">.scale(<span class="code-scale">0</span>).shape(<span class="code-shape">0</span>)</span><!--
             --><span class="sample exponential">.rate(<span class="code-rate">0</span>)</span>
 
-        //Génération
-        //Peut retourner par exemple <span class="code-next">random number</span>
+        //Generation
+        //Could display <span class="code-next">random number</span>
             setInterval(function () { console.log(generator.next()) }, 500)</code>
             </pre>
         </div>
