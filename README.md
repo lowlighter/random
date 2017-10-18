@@ -5,6 +5,7 @@ This library is an implementation in JavaScript of pseudo-randoms numbers genera
 * [Documentation](https://lowlighter.github.io/random/docs/)
 * [About](https://lowlight.fr/en/blog/random-library/)
 
+![Image of random numbers](https://github.com/lowlighter/random/raw/master/demo/imgs/demo.gif)
 
 # Features
 * **11** differents probability distributions
