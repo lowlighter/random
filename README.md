@@ -1,9 +1,8 @@
 # Random number generator
 This library is an implementation in JavaScript of pseudo-randoms numbers generators, heavily based on Python's [Random](https://github.com/python/cpython/blob/2.7/Lib/random.py) library.
 
-* [Live demo](https://lowlighter.github.io/random/demo/)
-* [Documentation](https://lowlighter.github.io/random/docs/)
-* [About](https://lowlight.fr/en/blog/random-library/)
+* [Live demo](https://lowlight.fr/random/demo/)
+* [Documentation](https://lowlight.fr/random/docs/)
 
 ![Image of random numbers](https://github.com/lowlighter/random/raw/master/demo/imgs/demo.gif)
 
@@ -159,4 +158,4 @@ Although `package.json` (which contains `"jsdoc_source", "jsdoc_output", "jsdoc_
 ## License
 This project is licensed under the MIT License.
 
-See [LICENSE.md](https://github.com/lowlighter/quadtree/blob/master/LICENSE.md) file for details.
+See [LICENSE.md](https://github.com/lowlighter/random/blob/master/LICENSE.md) file for details.
